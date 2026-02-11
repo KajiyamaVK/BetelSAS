@@ -2,6 +2,10 @@
 
 A new Flutter project.
 
+## Design Compliance
+
+All screen design images are located in the `screensDesign` directory. The project must strictly adhere to these designs regarding colors, components, and layout. While text labels may be subject to change, the visual structure and style are definitive.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

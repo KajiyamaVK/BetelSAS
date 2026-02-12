@@ -55,12 +55,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       // Let's assume the string passed includes 'assets/'. 
       // We might need to parse it.
        try {
-         if (widget.audioUrl.startsWith('assets/')) {
+         final cleanUrl = widget.audioUrl.trim();
+         if (cleanUrl.startsWith('assets/')) {
             // Remove 'assets/' prefix for AssetSource
-            final path = widget.audioUrl.replaceFirst('assets/', '');
+            final path = cleanUrl.replaceFirst('assets/', '');
             await _player.setSource(AssetSource(path));
          } else {
-             await _player.setSource(UrlSource(widget.audioUrl));
+             await _player.setSource(UrlSource(cleanUrl));
          }
        } catch(e) {
            print("Error loading audio: $e");

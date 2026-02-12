@@ -4,15 +4,8 @@
         "title": "Quem é Deus?",
         "category": "Teologia Sistemática",
         "imageUrl": "assets/images/lesson_1.png",
-        "content": "Deus é o Criador de todas as coisas. Ele é santo, justo e amoroso.",
+        "content": "Deus é o Criador de todas as coisas. Ele é santo, justo e amoroso. (Texto completo pendente de inserção manual)",
         "scriptureReference": "Gênesis 1:1",
-        "song": {
-            "id": "song_1",
-            "title": "Quem é Deus?",
-            "artist": "Betel Kids",
-            "audioUrl": "assets/audio/lesson_1.mp3",
-            "durationIds": 120
-        },
         "flashcards": [
             {
                 "id": "fc_1_1",
@@ -31,15 +24,8 @@
         "title": "A Criação",
         "category": "Teologia Sistemática",
         "imageUrl": "assets/images/lesson_2.png",
-        "content": "Deus criou o mundo em seis dias e descansou no sétimo. Tudo o que Ele fez foi muito bom.",
+        "content": "Deus criou o mundo em seis dias e descansou no sétimo. Tudo o que Ele fez foi muito bom. (Texto completo pendente de inserção manual)",
         "scriptureReference": "Gênesis 1:31",
-        "song": {
-            "id": "song_2",
-            "title": "O Mundo de Deus",
-            "artist": "Betel Kids",
-            "audioUrl": "assets/audio/lesson_2.mp3",
-            "durationIds": 180
-        },
         "flashcards": [
             {
                 "id": "fc_2_1",
@@ -52,5 +38,46 @@
                 "answer": "Ele descansou e santificou esse dia."
             }
         ]
+    },
+    {
+        "id": 3,
+        "title": "Adão e Eva",
+        "category": "Teologia Sistemática",
+        "imageUrl": "assets/images/lesson_3.png",
+        "content": "Texto pendente de inserção manual.",
+        "scriptureReference": "Gênesis 2-3",
+        "flashcards": []
+    },
+    {
+        "id": 4,
+        "title": "A Queda",
+        "category": "Teologia Sistemática",
+        "imageUrl": "assets/images/lesson_4.png",
+        "content": "Texto pendente de inserção manual.",
+        "scriptureReference": "Gênesis 3",
+        "song": {
+            "id": "song_4",
+            "title": "Quem é Deus? (Lesson 4)",
+            "artist": "Betel Kids",
+            "audioUrl": "assets/audio/lesson_4.mp3",
+            "durationIds": 120
+        },
+        "flashcards": []
+    },
+    {
+        "id": 5,
+        "title": "A Promessa",
+        "category": "Teologia Sistemática",
+        "imageUrl": "assets/images/lesson_5.png",
+        "content": "Texto pendente de inserção manual.",
+        "scriptureReference": "Gênesis 3:15",
+        "song": {
+            "id": "song_5",
+            "title": "A Promessa",
+            "artist": "Betel Kids",
+            "audioUrl": "assets/audio/lesson_5.mp3",
+            "durationIds": 120
+        },
+        "flashcards": []
     }
 ]

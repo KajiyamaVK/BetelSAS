@@ -23,16 +23,18 @@ class FavoritesScreen extends ConsumerWidget {
       body: favoritesState.when(
         data: (items) {
           if (items.isEmpty) {
-             return Column(
-               mainAxisAlignment: MainAxisAlignment.center,
-               children: [
-                 Icon(Icons.favorite_border_rounded, size: 80, color: Colors.grey[300]),
-                 const SizedBox(height: 16),
-                 Text(
-                   'Você ainda não tem favoritos.',
-                   style: AppTheme.bodyText.copyWith(color: Colors.grey),
-                 ),
-               ],
+             return Center(
+               child: Column(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                   Icon(Icons.favorite_border_rounded, size: 80, color: Colors.grey[300]),
+                   const SizedBox(height: 16),
+                   Text(
+                     'Você ainda não tem favoritos.',
+                     style: AppTheme.bodyText.copyWith(color: Colors.grey),
+                   ),
+                 ],
+               ),
              );
           }
           

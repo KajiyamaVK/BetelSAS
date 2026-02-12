@@ -7,13 +7,15 @@ This file contains instructions for the Gemini CLI agent to follow when working 
 - **Update Documentation**: Every time we add, remove, or update API endpoints or features, update `README.md` with detailed usage instructions.
 - **Test Preservation**: When code is not being updated, added, or removed, no content should change in tests. This is a strict shield against LLM mistakes; do not modify existing tests unless the feature they cover is changing.
 - **Strict TDD**: Always start by developing tests first (TDD). Run tests -> Fail -> Build solution to pass.
-- **Design Compliance**: All screen design images are located in the `screensDesign` directory. It is mandatory to follow these designs strictly, including colors and components, although text and labels may change in the future.
+- **Consult Guidelines**: Always consult the `guidelines/` directory for detailed context, screen designs (in `0-screens-designs`), and data structures (`5-data-layer.md`). These guidelines are the source of truth for the app's design and architecture.
+- **Design Compliance**: All screen design images are located in the `guidelines/0-screens-designs` directory. It is mandatory to follow these designs strictly, including colors and components, although text and labels may change in the future.
 
 ## Vibe Coding & TDD Workflow
 
 We follow "Vibe Coding" principles where the AI acts as an Orchestrator and TDD is the safety net.
 
 ### The Workflow
+
 1. **Define Intent (The Blueprint)**
    - Define the interface or requirement first. Do not jump to code.
    - Example: "Define a TypeScript interface for a service that handles..."

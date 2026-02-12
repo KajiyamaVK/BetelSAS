@@ -1,0 +1,56 @@
+[
+    {
+        "id": 1,
+        "title": "Quem é Deus?",
+        "category": "Teologia Sistemática",
+        "imageUrl": "assets/images/lesson_1.png",
+        "content": "Deus é o Criador de todas as coisas. Ele é santo, justo e amoroso.",
+        "scriptureReference": "Gênesis 1:1",
+        "song": {
+            "id": "song_1",
+            "title": "Quem é Deus?",
+            "artist": "Betel Kids",
+            "audioUrl": "assets/audio/lesson_1.mp3",
+            "durationIds": 120
+        },
+        "flashcards": [
+            {
+                "id": "fc_1_1",
+                "question": "Quem criou o mundo?",
+                "answer": "Deus criou todas as coisas pelo poder da Sua palavra."
+            },
+            {
+                "id": "fc_1_2",
+                "question": "O que significa que Deus é Santo?",
+                "answer": "Significa que Ele é perfeito e separado de todo o mal."
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "title": "A Criação",
+        "category": "Teologia Sistemática",
+        "imageUrl": "assets/images/lesson_2.png",
+        "content": "Deus criou o mundo em seis dias e descansou no sétimo. Tudo o que Ele fez foi muito bom.",
+        "scriptureReference": "Gênesis 1:31",
+        "song": {
+            "id": "song_2",
+            "title": "O Mundo de Deus",
+            "artist": "Betel Kids",
+            "audioUrl": "assets/audio/lesson_2.mp3",
+            "durationIds": 180
+        },
+        "flashcards": [
+            {
+                "id": "fc_2_1",
+                "question": "Em quantos dias Deus criou o mundo?",
+                "answer": "Em seis dias."
+            },
+            {
+                "id": "fc_2_2",
+                "question": "O que Deus fez no sétimo dia?",
+                "answer": "Ele descansou e santificou esse dia."
+            }
+        ]
+    }
+]

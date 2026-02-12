@@ -172,6 +172,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     max: _duration.inSeconds.toDouble(),
                     value: _position.inSeconds.toDouble().clamp(0, _duration.inSeconds.toDouble()),
                     activeColor: AppTheme.primaryColor,
+                    inactiveColor: Colors.grey.withOpacity(0.3),
                     onChanged: (value) async {
                        final position = Duration(seconds: value.toInt());
                        await _player.seek(position);

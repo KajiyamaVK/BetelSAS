@@ -84,15 +84,16 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 20,
-            offset: const Offset(0, -5),
+            offset: const Offset(0, 5),
           )
         ],
       ),
@@ -122,18 +123,41 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: () {
-                    if (_isPlaying) {
-                      _player.pause();
-                    } else {
-                      _player.resume();
-                    }
-                  },
-                  icon: Icon(
-                    _isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
-                    size: 48,
+                Container(
+                  decoration: const BoxDecoration(
                     color: AppTheme.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      _player.seek(Duration.zero);
+                    },
+                    icon: const Icon(
+                      Icons.skip_previous_rounded,
+                      size: 24,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      if (_isPlaying) {
+                        _player.pause();
+                      } else {
+                        _player.resume();
+                      }
+                    },
+                    icon: Icon(
+                      _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      size: 32,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ],

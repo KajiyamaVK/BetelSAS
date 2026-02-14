@@ -42,3 +42,16 @@ The app features a clean, modern, and friendly aesthetic, tailored for children 
 - **Buttons**:
   - **Primary**: Pill-shaped or circular, yellow background with black text/icon.
   - **Secondary/Ghost**: Transparent or light grey.
+
+### Image Guidelines
+
+- **Dashboard Cards**:
+  - **Resolution**: Recommend **1200x600 px** (~2:1 aspect ratio) or **1280x720 px** (16:9).
+  - **Constraints**:
+    - **Height**: Fixed at `200` logical pixels.
+    - **Width**: Responsive (screen width minus padding).
+    - **Fit**: `BoxFit.cover` centers and crops the image to fill the container.
+  - **Safe Zone**: Keep important content centered. Edges may be cropped on different devices.
+  - **Optimization**:
+    - Use **WebP** or optimized **JPEG** format to reduce file size.
+    - Target file size: **< 150KB** per image to ensure fast loading and smooth scrolling.

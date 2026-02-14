@@ -93,7 +93,6 @@ class _FlashcardDashboardState extends ConsumerState<FlashcardDashboard> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   height: 200, // Fixed height for better visual
-                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor,
                     borderRadius: BorderRadius.circular(24),
@@ -138,9 +137,11 @@ class _FlashcardDashboardState extends ConsumerState<FlashcardDashboard> {
                        ),
                        // Content
                        Center(
-                         child: Column(
-                           mainAxisSize: MainAxisSize.min,
-                           children: [
+                         child: Padding(
+                           padding: const EdgeInsets.all(24),
+                           child: Column(
+                             mainAxisSize: MainAxisSize.min,
+                             children: [
                       Text(
                         'Vamos praticar?',
                         style: AppTheme.heading2.copyWith(color: Colors.white),
@@ -184,6 +185,7 @@ class _FlashcardDashboardState extends ConsumerState<FlashcardDashboard> {
                         ),
                       ),
                            ],
+                           ),
                          ),
                        ),
                     ],

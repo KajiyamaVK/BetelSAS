@@ -92,10 +92,15 @@ class _FlashcardDashboardState extends ConsumerState<FlashcardDashboard> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
+                  height: 200, // Fixed height for better visual
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor,
                     borderRadius: BorderRadius.circular(24),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/lesson_1.png'), // Placeholder
+                      fit: BoxFit.cover,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.primaryColor.withOpacity(0.3),
@@ -104,8 +109,38 @@ class _FlashcardDashboardState extends ConsumerState<FlashcardDashboard> {
                       ),
                     ],
                   ),
-                  child: Column(
+                  child: Stack(
                     children: [
+                       // Yellow Mask (0.4 opacity)
+                       Positioned.fill(
+                         child: Container(
+                           decoration: BoxDecoration(
+                             color: AppTheme.primaryColor.withOpacity(0.4),
+                             borderRadius: BorderRadius.circular(24),
+                           ),
+                         ),
+                       ),
+                       // Black Fade (Bottom to Top)
+                       Positioned.fill(
+                         child: Container(
+                           decoration: BoxDecoration(
+                             borderRadius: BorderRadius.circular(24),
+                             gradient: LinearGradient(
+                               begin: Alignment.bottomCenter,
+                               end: Alignment.topCenter,
+                               colors: [
+                                 Colors.black.withOpacity(0.8),
+                                 Colors.transparent,
+                               ],
+                             ),
+                           ),
+                         ),
+                       ),
+                       // Content
+                       Center(
+                         child: Column(
+                           mainAxisSize: MainAxisSize.min,
+                           children: [
                       Text(
                         'Vamos praticar?',
                         style: AppTheme.heading2.copyWith(color: Colors.white),
@@ -148,6 +183,9 @@ class _FlashcardDashboardState extends ConsumerState<FlashcardDashboard> {
                           ),
                         ),
                       ),
+                           ],
+                         ),
+                       ),
                     ],
                   ),
                 ),

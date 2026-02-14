@@ -42,8 +42,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Início',
+            icon: Icon(Icons.menu_book_rounded),
+            label: 'Lições',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.music_note_rounded),

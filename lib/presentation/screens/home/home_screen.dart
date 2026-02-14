@@ -22,14 +22,15 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     Text(
-                      DateFormat('EEEE, d MMMM').format(DateTime.now()).toUpperCase(),
-                      style: AppTheme.caption.copyWith(fontWeight: FontWeight.bold),
+                      'Lições',
+                      style: AppTheme.heading1,
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      'Vamos aprender\nsobre Deus',
-                      style: AppTheme.heading1,
+                      'Eu & minha Casa Serviremos a Deus',
+                      style: AppTheme.bodyText.copyWith(fontStyle: FontStyle.italic),
                     ),
                   ],
                 ),

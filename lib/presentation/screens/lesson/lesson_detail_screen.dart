@@ -1,15 +1,108 @@
+import 'dart:io';
 import 'package:betelsas/core/theme/app_theme.dart';
 import 'package:betelsas/data/models/lesson.dart';
 import 'package:betelsas/presentation/widgets/audio_player_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pdfrx/pdfrx.dart';
+import 'package:path_provider/path_provider.dart';
 
-class LessonDetailScreen extends StatelessWidget {
+class LessonDetailScreen extends StatefulWidget {
   final Lesson lesson;
 
   const LessonDetailScreen({super.key, required this.lesson});
 
   @override
+  State<LessonDetailScreen> createState() => _LessonDetailScreenState();
+}
+
+class _LessonDetailScreenState extends State<LessonDetailScreen> {
+  String? localPdfPath;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.lesson.pdfUrl != null) {
+      _preparePdf(widget.lesson.pdfUrl!);
+    }
+  }
+
+  Future<void> _preparePdf(String assetPath) async {
+    try {
+      final data = await rootBundle.load(assetPath);
+      final bytes = data.buffer.asUint8List();
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/${assetPath.split('/').last}');
+
+      await file.writeAsBytes(bytes, flush: true);
+      setState(() {
+        localPdfPath = file.path;
+      });
+    } catch (e) {
+      debugPrint('Error preparing PDF: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (widget.lesson.pdfUrl != null) {
+      return _buildPdfLayout();
+    }
+    return _buildTextLayout();
+  }
+
+  Widget _buildPdfLayout() {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppTheme.primaryColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.lesson.title,
+          style: AppTheme.heading2.copyWith(color: Colors.white),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_border_rounded, color: Colors.white),
+            onPressed: () {
+              // Toggle favorite logic
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          if (localPdfPath != null)
+            Padding(
+              padding: EdgeInsets.only(bottom: widget.lesson.song != null ? 100 : 0),
+              child: PdfViewer.file(
+                localPdfPath!,
+                params: PdfViewerParams(
+                  maxScale: 3.0,
+                  // Enable momentum scrolling
+                  scrollPhysics: const BouncingScrollPhysics(),
+                ),
+              ),
+            )
+          else
+            const Center(child: CircularProgressIndicator()),
+          if (widget.lesson.song != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: AudioPlayerWidget(
+                audioUrl: widget.lesson.song!.audioUrl,
+                title: widget.lesson.song!.title,
+                artist: widget.lesson.song!.artist,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextLayout() {
     return Scaffold(
       body: Stack(
         children: [
@@ -35,53 +128,55 @@ class LessonDetailScreen extends StatelessWidget {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                       Image.asset(
-                         'assets/images/lesson_${lesson.id}.png', // Ensure assets exist or mock
-                         fit: BoxFit.cover,
-                         errorBuilder: (context, error, stackTrace) => Container(color: AppTheme.primaryColor),
-                       ),
-                       Container(
-                         decoration: BoxDecoration(
-                           gradient: LinearGradient(
-                             begin: Alignment.topCenter,
-                             end: Alignment.bottomCenter,
-                             colors: [
-                               Colors.transparent,
-                               Colors.black.withOpacity(0.7),
-                             ],
-                           ),
-                         ),
-                       ),
-                       Positioned(
-                         bottom: 20,
-                         left: 20,
-                         right: 20,
-                         child: Column(
-                           crossAxisAlignment: CrossAxisAlignment.start,
-                           children: [
-                             Container(
-                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                               decoration: BoxDecoration(
-                                 color: AppTheme.primaryColor,
-                                 borderRadius: BorderRadius.circular(20),
-                               ),
-                               child: Text(
-                                 'LIÇÃO ${lesson.id}',
-                                 style: AppTheme.caption.copyWith(fontWeight: FontWeight.bold, color: Colors.black),
-                               ),
-                             ),
-                             const SizedBox(height: 8),
-                             Text(
-                               lesson.title,
-                               style: AppTheme.heading1.copyWith(color: Colors.white),
-                             ),
-                             Text(
-                               lesson.category,
-                               style: AppTheme.bodyText.copyWith(color: Colors.white70),
-                             ),
-                           ],
-                         ),
-                       )
+                      Image.asset(
+                        'assets/images/lesson_${widget.lesson.id}.png', // Ensure assets exist or mock
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(color: AppTheme.primaryColor),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.7),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                'LIÇÃO ${widget.lesson.id}',
+                                style: AppTheme.caption
+                                    .copyWith(fontWeight: FontWeight.bold, color: Colors.black),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.lesson.title,
+                              style: AppTheme.heading1.copyWith(color: Colors.white),
+                            ),
+                            Text(
+                              widget.lesson.category,
+                              style: AppTheme.bodyText.copyWith(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                      )
                     ],
                   ),
                 ),
@@ -92,10 +187,10 @@ class LessonDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildScriptureCard(lesson.scriptureReference),
+                      _buildScriptureCard(widget.lesson.scriptureReference),
                       const SizedBox(height: 24),
                       Text(
-                        lesson.content, // Simple string for now, could be Markdown
+                        widget.lesson.content,
                         style: AppTheme.bodyText.copyWith(height: 1.6, fontSize: 18),
                       ),
                       const SizedBox(height: 100), // Space for audio player
@@ -105,13 +200,13 @@ class LessonDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-          if (lesson.song != null)
+          if (widget.lesson.song != null)
             Align(
               alignment: Alignment.bottomCenter,
               child: AudioPlayerWidget(
-                audioUrl: lesson.song!.audioUrl,
-                title: lesson.song!.title,
-                artist: lesson.song!.artist,
+                audioUrl: widget.lesson.song!.audioUrl,
+                title: widget.lesson.song!.title,
+                artist: widget.lesson.song!.artist,
               ),
             ),
         ],

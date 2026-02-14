@@ -12,6 +12,7 @@ class Lesson {
   final String imageUrl;
   final String content;
   final String scriptureReference;
+  final String? pdfUrl;
   final Song? song;
   final List<Flashcard> flashcards;
 
@@ -22,6 +23,7 @@ class Lesson {
     required this.imageUrl,
     required this.content,
     required this.scriptureReference,
+    this.pdfUrl,
     this.song,
     required this.flashcards,
   });

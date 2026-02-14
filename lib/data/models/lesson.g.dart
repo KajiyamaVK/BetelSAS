@@ -13,6 +13,7 @@ Lesson _$LessonFromJson(Map<String, dynamic> json) => Lesson(
   imageUrl: json['imageUrl'] as String,
   content: json['content'] as String,
   scriptureReference: json['scriptureReference'] as String,
+  pdfUrl: json['pdfUrl'] as String?,
   song: json['song'] == null
       ? null
       : Song.fromJson(json['song'] as Map<String, dynamic>),
@@ -28,6 +29,7 @@ Map<String, dynamic> _$LessonToJson(Lesson instance) => <String, dynamic>{
   'imageUrl': instance.imageUrl,
   'content': instance.content,
   'scriptureReference': instance.scriptureReference,
+  'pdfUrl': instance.pdfUrl,
   'song': instance.song,
   'flashcards': instance.flashcards,
 };

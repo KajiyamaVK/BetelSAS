@@ -1,26 +1,18 @@
 import 'package:betelsas/core/theme/app_theme.dart';
+import 'package:betelsas/presentation/providers/audio_provider.dart';
 import 'package:betelsas/presentation/screens/music/music_view_model.dart';
 import 'package:betelsas/presentation/widgets/audio_player_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MusicScreen extends ConsumerStatefulWidget {
+class MusicScreen extends ConsumerWidget {
   const MusicScreen({super.key});
 
   @override
-  ConsumerState<MusicScreen> createState() => _MusicScreenState();
-}
-
-class _MusicScreenState extends ConsumerState<MusicScreen> {
-  // Simple state to track currently playing song for the bottom player
-  // In a real app, this would be global state
-  String? _currentAudioUrl;
-  String? _currentTitle;
-  String? _currentArtist;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final songsState = ref.watch(musicViewModelProvider);
+    final audioState = ref.watch(audioProvider);
+    final audioNotifier = ref.read(audioProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -41,7 +33,8 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                 itemCount: songs.length,
                 itemBuilder: (context, index) {
                   final song = songs[index];
-                  final isPlayingThis = _currentAudioUrl == song.audioUrl;
+                  final isPlayingThis = audioState.currentUrl == song.audioUrl && audioState.isPlaying;
+                  final isCurrent = audioState.currentUrl == song.audioUrl;
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -49,10 +42,10 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       leading: CircleAvatar(
-                        backgroundColor: isPlayingThis ? AppTheme.primaryColor : AppTheme.scaffoldBackgroundColor,
+                        backgroundColor: isCurrent ? AppTheme.primaryColor : AppTheme.scaffoldBackgroundColor,
                         child: Icon(
-                          isPlayingThis ? Icons.graphic_eq_rounded : Icons.music_note_rounded,
-                          color: isPlayingThis ? Colors.white : Colors.grey,
+                          isCurrent ? Icons.graphic_eq_rounded : Icons.music_note_rounded,
+                          color: isCurrent ? Colors.white : Colors.grey,
                         ),
                       ),
                       title: Text(song.title, style: AppTheme.bodyText.copyWith(fontWeight: FontWeight.bold)),
@@ -64,17 +57,15 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                           size: 32,
                         ),
                         onPressed: () {
-                          setState(() {
-                            if (isPlayingThis) {
-                              // Stop/Pause logic would go here if we had full control
-                              // For now just re-selecting logic
-                              // _currentAudioUrl = null; 
-                            } else {
-                              _currentAudioUrl = song.audioUrl;
-                              _currentTitle = song.title;
-                              _currentArtist = song.artist;
-                            }
-                          });
+                          if (isPlayingThis) {
+                            audioNotifier.pause();
+                          } else {
+                            audioNotifier.play(
+                              song.audioUrl,
+                              title: song.title,
+                              artist: song.artist,
+                            );
+                          }
                         },
                       ),
                     ),
@@ -86,16 +77,10 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
             error: (e, s) => Center(child: Text('Erro: $e')),
           ),
           
-          if (_currentAudioUrl != null)
-             Align(
+          if (audioState.currentUrl != null)
+             const Align(
                alignment: Alignment.bottomCenter,
-               child: AudioPlayerWidget(
-                  // We likely need a UniqueKey to force rebuild/reload source when song changes
-                  key: ValueKey(_currentAudioUrl),
-                  audioUrl: _currentAudioUrl!,
-                  title: _currentTitle!,
-                  artist: _currentArtist!,
-               ),
+               child: AudioPlayerWidget(),
              ),
         ],
       ),

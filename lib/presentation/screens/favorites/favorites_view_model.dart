@@ -1,6 +1,7 @@
 import 'package:betelsas/core/providers.dart';
 import 'package:betelsas/data/models/lesson.dart';
 import 'package:betelsas/data/models/song.dart';
+import 'package:betelsas/domain/repositories/favorites_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final favoritesViewModelProvider = StateNotifierProvider<FavoritesViewModel, AsyncValue<List<dynamic>>>((ref) {
@@ -16,29 +17,27 @@ class FavoritesViewModel extends StateNotifier<AsyncValue<List<dynamic>>> {
 
   Future<void> loadFavorites() async {
     try {
-      final db = await _ref.read(databaseHelperProvider).database;
-      final savedFavorites = await db.query('favorites');
-      
-      // In a real app complexity, we'd have a better way to hydrate
-      // For now, load all content and match IDs
+      final repo = _ref.read(favoritesRepositoryProvider);
+      final favorites = await repo.getFavorites();
+
       final contentRepo = _ref.read(contentRepositoryProvider);
       final lessons = await contentRepo.loadLessons();
       final songs = lessons.where((l) => l.song != null).map((l) => l.song!).toList();
 
       final List<dynamic> favoriteItems = [];
 
-      for (var fav in savedFavorites) {
-        final type = fav['type'] as String;
-        final id = fav['item_id'] as String;
-
-        if (type == 'lesson') {
-           // Lesson ID is int in our model, strict check needed
-           final lessonId = int.tryParse(id);
-           final lesson = lessons.firstWhere((l) => l.id == lessonId, orElse: () => lessons.first); // fallback bad
-           if (lesson.id == lessonId) favoriteItems.add(lesson);
-        } else if (type == 'song') {
+      for (var fav in favorites) {
+        if (fav.type == 'lesson') {
+           final lessonId = int.tryParse(fav.itemId);
+           if (lessonId != null) {
+              try {
+                final lesson = lessons.firstWhere((l) => l.id == lessonId);
+                favoriteItems.add(lesson);
+              } catch (_) {}
+           }
+        } else if (fav.type == 'song') {
            try {
-             final song = songs.firstWhere((s) => s.id == id);
+             final song = songs.firstWhere((s) => s.id == fav.itemId);
              favoriteItems.add(song);
            } catch (_) {}
         }
@@ -48,5 +47,29 @@ class FavoritesViewModel extends StateNotifier<AsyncValue<List<dynamic>>> {
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }
+  }
+
+  Future<void> toggleFavorite(String type, String itemId) async {
+    try {
+      final repo = _ref.read(favoritesRepositoryProvider);
+      final isFav = await repo.isFavorite(type, itemId);
+      
+      if (isFav) {
+        await repo.removeFavorite(type, itemId);
+      } else {
+        await repo.addFavorite(type, itemId);
+      }
+      
+      // Reload favorites to update the list
+      await loadFavorites();
+    } catch (e) {
+      // Handle error or show snackbar via a provider/listener
+      print('Error toggling favorite: $e');
+    }
+  }
+
+  Future<bool> isFavorite(String type, String itemId) async {
+    final repo = _ref.read(favoritesRepositoryProvider);
+    return await repo.isFavorite(type, itemId);
   }
 }

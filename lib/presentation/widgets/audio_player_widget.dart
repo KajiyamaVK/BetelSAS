@@ -1,78 +1,19 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:betelsas/core/theme/app_theme.dart';
+import 'package:betelsas/presentation/providers/audio_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AudioPlayerWidget extends StatefulWidget {
-  final String audioUrl;
-  final String title;
-  final String artist;
-
-  const AudioPlayerWidget({
-    super.key,
-    required this.audioUrl,
-    required this.title,
-    required this.artist,
-  });
+class AudioPlayerWidget extends ConsumerStatefulWidget {
+  const AudioPlayerWidget({super.key});
 
   @override
-  State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
+  ConsumerState<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
 }
 
-class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  late AudioPlayer _player;
-  bool _isPlaying = false;
-  Duration _duration = Duration.zero;
-  Duration _position = Duration.zero;
-
-  @override
-  void initState() {
-    super.initState();
-    _player = AudioPlayer();
-    
-    // In a real app, you'd bind this to a global audio service
-    // For now, we just set up local listeners
-    _player.onPlayerStateChanged.listen((state) {
-      if (mounted) setState(() => _isPlaying = state == PlayerState.playing);
-    });
-
-    _player.onDurationChanged.listen((newDuration) {
-      if (mounted) setState(() => _duration = newDuration);
-    });
-
-    _player.onPositionChanged.listen((newPosition) {
-      if (mounted) setState(() => _position = newPosition);
-    });
-    
-    _initAudio();
-  }
-  
-  Future<void> _initAudio() async {
-      // Logic to set source. 
-      // If assets/audio/..., use AssetSource
-      // For now, we assume it's an asset path like 'assets/audio/lesson_1.mp3'
-      // To use AssetSource, we need the path relative to assets/ IF we use AudioCache (old)
-      // Or full path? AudioPlayers usually takes 'audio/lesson_1.mp3' if it's in assets.
-      // Let's assume the string passed includes 'assets/'. 
-      // We might need to parse it.
-       try {
-         final cleanUrl = widget.audioUrl.trim();
-         if (cleanUrl.startsWith('assets/')) {
-            // Remove 'assets/' prefix for AssetSource
-            final path = cleanUrl.replaceFirst('assets/', '');
-            await _player.setSource(AssetSource(path));
-         } else {
-             await _player.setSource(UrlSource(cleanUrl));
-         }
-       } catch(e) {
-           print("Error loading audio: $e");
-       }
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
+class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
+  // Local state for smooth slider dragging
+  bool _isDragging = false;
+  double? _dragValue;
 
   String _formatTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -83,6 +24,16 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final audioState = ref.watch(audioProvider);
+    final notifier = ref.read(audioProvider.notifier);
+
+    final currentPosition = _isDragging 
+        ? Duration(seconds: _dragValue?.toInt() ?? 0) 
+        : audioState.position;
+    
+    final maxDuration = audioState.duration.inSeconds.toDouble();
+    final value = currentPosition.inSeconds.toDouble().clamp(0.0, maxDuration > 0 ? maxDuration : 0.0);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       padding: const EdgeInsets.all(16),
@@ -91,7 +42,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 5),
           )
@@ -108,7 +59,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.music_note_rounded, color: AppTheme.primaryColor),
@@ -118,8 +69,18 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.title, style: AppTheme.heading2.copyWith(fontSize: 16)),
-                      Text(widget.artist, style: AppTheme.caption),
+                      Text(
+                        audioState.currentTitle ?? 'Desconhecido', 
+                        style: AppTheme.heading2.copyWith(fontSize: 16),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        audioState.currentArtist ?? 'Desconhecido', 
+                        style: AppTheme.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
@@ -130,7 +91,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   ),
                   child: IconButton(
                     onPressed: () {
-                      _player.seek(Duration.zero);
+                      notifier.seek(Duration.zero);
                     },
                     icon: const Icon(
                       Icons.skip_previous_rounded,
@@ -147,14 +108,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   ),
                   child: IconButton(
                     onPressed: () {
-                      if (_isPlaying) {
-                        _player.pause();
+                      if (audioState.isPlaying) {
+                        notifier.pause();
                       } else {
-                        _player.resume();
+                        notifier.resume();
                       }
                     },
                     icon: Icon(
-                      _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      audioState.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                       size: 32,
                       color: Colors.black,
                     ),
@@ -165,21 +126,28 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             const SizedBox(height: 10),
             Row(
               children: [
-                Text(_formatTime(_position), style: AppTheme.caption),
+                Text(_formatTime(currentPosition), style: AppTheme.caption),
                 Expanded(
                   child: Slider(
                     min: 0,
-                    max: _duration.inSeconds.toDouble(),
-                    value: _position.inSeconds.toDouble().clamp(0, _duration.inSeconds.toDouble()),
+                    max: maxDuration > 0 ? maxDuration : 1.0,
+                    value: value,
                     activeColor: AppTheme.primaryColor,
-                    inactiveColor: Colors.grey.withOpacity(0.3),
-                    onChanged: (value) async {
-                       final position = Duration(seconds: value.toInt());
-                       await _player.seek(position);
+                    inactiveColor: Colors.grey.withValues(alpha: 0.3),
+                    onChangeStart: (_) => setState(() => _isDragging = true),
+                    onChangeEnd: (val) {
+                      setState(() {
+                         _isDragging = false;
+                         _dragValue = null;
+                      });
+                      notifier.seek(Duration(seconds: val.toInt()));
+                    },
+                    onChanged: (val) {
+                      setState(() => _dragValue = val);
                     },
                   ),
                 ),
-                Text(_formatTime(_duration), style: AppTheme.caption),
+                Text(_formatTime(audioState.duration), style: AppTheme.caption),
               ],
             )
           ],

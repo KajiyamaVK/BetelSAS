@@ -170,10 +170,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                               widget.lesson.title,
                               style: AppTheme.heading1.copyWith(color: Colors.white),
                             ),
-                            Text(
-                              widget.lesson.category,
-                              style: AppTheme.bodyText.copyWith(color: Colors.white70),
-                            ),
+
                           ],
                         ),
                       )

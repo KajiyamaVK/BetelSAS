@@ -8,7 +8,7 @@ part 'lesson.g.dart';
 class Lesson {
   final int id;
   final String title;
-  final String category;
+
   final String imageUrl;
   final String content;
   final String scriptureReference;
@@ -19,7 +19,7 @@ class Lesson {
   Lesson({
     required this.id,
     required this.title,
-    required this.category,
+
     required this.imageUrl,
     required this.content,
     required this.scriptureReference,

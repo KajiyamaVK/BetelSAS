@@ -168,7 +168,9 @@ class _FlashcardDashboardState extends ConsumerState<FlashcardDashboard> {
                   itemCount: state.filteredCards.length,
                   itemBuilder: (context, index) {
                     final item = state.filteredCards[index];
-                    return _buildCardItem(item, index + 1);
+                    // Use the index from the ORIGINAL list + 1
+                    final originalIndex = state.allCards.indexOf(item) + 1;
+                    return _buildCardItem(item, originalIndex);
                   },
                 ),
               ),

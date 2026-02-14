@@ -71,9 +71,12 @@ class FlashcardRepository {
         status = FlashcardStatus.newCard;
       } else {
         final int nextReviewMillis = progress['next_review'] as int;
+        final int box = progress['box'] as int;
         final DateTime nextReview = DateTime.fromMillisecondsSinceEpoch(nextReviewMillis);
 
-        if (nextReview.isBefore(now)) {
+        // If card is in Box 0 (Learning/Relearning), it should be Review/Learning
+        // regardless of the exact minute/hour of next review.
+        if (box == 0 || nextReview.isBefore(now)) {
           status = FlashcardStatus.review;
         } else {
           // If reviewed and not currently due, consider it 'learned' for this simplified logic

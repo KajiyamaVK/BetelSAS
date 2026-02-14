@@ -23,8 +23,12 @@ class StudySession extends ConsumerStatefulWidget {
 class _StudySessionState extends ConsumerState<StudySession> {
   final CardSwiperController _controller = CardSwiperController();
   
+
   // Track current card index to update progress bar
   int _currentIndex = 0;
+
+  // Track pending database operations to prevent race conditions
+  final List<Future<void>> _pendingOperations = [];
 
   @override
   void dispose() {
@@ -43,8 +47,12 @@ class _StudySessionState extends ConsumerState<StudySession> {
       performance = 'easy';
     }
 
-    // Call repository
-    ref.read(flashcardRepositoryProvider).recordReview(card.id, performance);
+    // Call repository and track the future
+    final future = ref.read(flashcardRepositoryProvider).recordReview(card.id, performance);
+    _pendingOperations.add(future);
+    
+    // Clean up completed futures to avoid memory leaks (optional for short sessions but good practice)
+    future.whenComplete(() => _pendingOperations.remove(future));
 
     setState(() {
       if (nextIndex != null) {
@@ -55,9 +63,19 @@ class _StudySessionState extends ConsumerState<StudySession> {
     return true; // Return true to allow swipe
   }
   
-  void _onEnd() {
-    if (widget.onSessionComplete != null) {
-      widget.onSessionComplete!();
+  Future<void> _onEnd() async {
+    try {
+      // Wait for all pending database writes to complete
+      if (_pendingOperations.isNotEmpty) {
+        await Future.wait(_pendingOperations);
+      }
+    } catch (e) {
+      // Log error but ensure we still close the session
+      debugPrint('Error saving flashcard progress: $e');
+    } finally {
+      if (mounted && widget.onSessionComplete != null) {
+        widget.onSessionComplete!();
+      }
     }
   }
 

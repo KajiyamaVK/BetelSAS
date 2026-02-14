@@ -46,6 +46,47 @@ class FlashcardRepository {
     return dueCards;
   }
 
+  Future<List<FlashcardWithStatus>> getAllFlashcardsWithStatus() async {
+    // 1. Load all static flashcards
+    final lessons = await _contentRepository.loadLessons();
+    final allFlashcards = lessons.expand((l) => l.flashcards).toList();
+
+    // 2. Load progress from SQLite
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> progressMaps = await db.query('flashcard_progress');
+
+    // Create a map for quick access
+    final Map<String, Map<String, dynamic>> progressDict = {
+      for (var p in progressMaps) p['flashcard_id'] as String: p
+    };
+
+    final DateTime now = DateTime.now();
+    final List<FlashcardWithStatus> result = [];
+
+    for (var card in allFlashcards) {
+      final progress = progressDict[card.id];
+      FlashcardStatus status;
+
+      if (progress == null) {
+        status = FlashcardStatus.newCard;
+      } else {
+        final int nextReviewMillis = progress['next_review'] as int;
+        final DateTime nextReview = DateTime.fromMillisecondsSinceEpoch(nextReviewMillis);
+
+        if (nextReview.isBefore(now)) {
+          status = FlashcardStatus.review;
+        } else {
+          // If reviewed and not currently due, consider it 'learned' for this simplified logic
+          status = FlashcardStatus.learned;
+        }
+      }
+      
+      result.add(FlashcardWithStatus(flashcard: card, status: status));
+    }
+
+    return result;
+  }
+
   Future<void> recordReview(String flashcardId, String performance) async {
     final db = await _databaseHelper.database;
     final DateTime now = DateTime.now();
@@ -85,5 +126,10 @@ class FlashcardRepository {
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<void> resetProgress() async {
+    final db = await _databaseHelper.database;
+    await db.delete('flashcard_progress');
   }
 }

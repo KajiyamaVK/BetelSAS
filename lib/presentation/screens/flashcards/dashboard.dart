@@ -1,122 +1,327 @@
+import 'dart:async';
 import 'package:betelsas/core/theme/app_theme.dart';
+import 'package:betelsas/data/models/flashcard.dart';
 import 'package:betelsas/presentation/screens/flashcards/dashboard_view_model.dart';
 import 'package:betelsas/presentation/screens/flashcards/study_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class FlashcardDashboard extends ConsumerWidget {
+class FlashcardDashboard extends ConsumerStatefulWidget {
   const FlashcardDashboard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dueCardsState = ref.watch(flashcardDashboardProvider);
+  ConsumerState<FlashcardDashboard> createState() => _FlashcardDashboardState();
+}
+
+class _FlashcardDashboardState extends ConsumerState<FlashcardDashboard> {
+  Timer? _longPressTimer;
+
+  void _startTimer() {
+    _longPressTimer?.cancel();
+    _longPressTimer = Timer(const Duration(seconds: 10), () {
+      _showResetDialog();
+    });
+  }
+
+  void _cancelTimer() {
+    _longPressTimer?.cancel();
+    _longPressTimer = null;
+  }
+
+  Future<void> _showResetDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Resetar Progresso?'),
+        content: const Text(
+          'Deseja resetar TODOS os cards para o estado "Novo"? Esta ação não pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
+            child: const Text('Resetar Tudo'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      ref.read(flashcardDashboardProvider.notifier).resetAllCards();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Todos os cards foram resetados!')),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _longPressTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stateMsg = ref.watch(flashcardDashboardProvider);
 
     return Scaffold(
+      backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Flashcards'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         titleTextStyle: AppTheme.heading1.copyWith(color: AppTheme.textColor),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
+      body: stateMsg.when(
+        data: (state) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Filters
+              _buildFilters(context, ref, state.filter),
+              
+              const SizedBox(height: 20),
+              
+              // Start Session Button Area
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
-                ],
+                  child: Column(
+                    children: [
+                      Text(
+                        'Vamos praticar?',
+                        style: AppTheme.heading2.copyWith(color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '${state.filteredCards.length} cards selecionados',
+                        style: AppTheme.bodyText.copyWith(color: Colors.white),
+                      ),
+                      const SizedBox(height: 20),
+                      Listener(
+                        onPointerDown: (_) => _startTimer(),
+                        onPointerUp: (_) => _cancelTimer(),
+                        onPointerCancel: (_) => _cancelTimer(),
+                        child: ElevatedButton.icon(
+                          onPressed: state.filteredCards.isEmpty
+                              ? null
+                              : () {
+                                  _cancelTimer(); // Cancel timer just in case
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => StudySession(
+                                        flashcards: state.filteredCards.map((c) => c.flashcard).toList(),
+                                        onSessionComplete: () {
+                                          ref.invalidate(flashcardDashboardProvider);
+                                          Navigator.pop(context); // Pop back to dashboard after session
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                          icon: const Icon(Icons.play_arrow_rounded),
+                          label: const Text('Começar Sessão'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppTheme.textColor,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: Column(
-                children: [
-                  Text(
-                    'Vamos praticar?',
-                    style: AppTheme.heading2.copyWith(color: Colors.white),
-                  ),
-                  const SizedBox(height: 10),
-                  dueCardsState.when(
-                    data: (cards) => Text(
-                      '${cards.length} cards para revisar',
-                      style: AppTheme.heading1.copyWith(color: Colors.white, fontSize: 32),
-                    ),
-                    loading: () => const CircularProgressIndicator(color: Colors.white),
-                    error: (e, s) => const Text('Erro', style: TextStyle(color: Colors.white)),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      dueCardsState.whenData((cards) {
-                        if (cards.isNotEmpty) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => StudySession(flashcards: cards),
-                            ),
-                          ).then((_) {
-                              // Refresh on return
-                              ref.refresh(flashcardDashboardProvider);
-                          });
-                        }
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppTheme.textColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    ),
-                    child: const Text('Começar Sessão'),
-                  ),
-                ],
+
+              const SizedBox(height: 30),
+              
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text('Lista de Cards', style: AppTheme.heading2),
               ),
-            ),
-             const SizedBox(height: 30),
-             Text('Seus Baralhos', style: AppTheme.heading2),
-             const SizedBox(height: 10),
-             // Mock List of Decks
-             Expanded(
-               child: ListView(
-                 children: [
-                   _buildDeckTile('Teologia Sistemática', 10, 2),
-                   _buildDeckTile('História da Bíblia', 15, 0),
-                   _buildDeckTile('Memorização', 5, 5),
-                 ],
-               ),
-             ),
-          ],
-        ),
+              const SizedBox(height: 10),
+
+              // Card List
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  itemCount: state.filteredCards.length,
+                  itemBuilder: (context, index) {
+                    final item = state.filteredCards[index];
+                    return _buildCardItem(item, index + 1);
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, s) => Center(child: Text('Erro: $e')),
       ),
     );
   }
 
-  Widget _buildDeckTile(String title, int total, int newCards) {
+  Widget _buildFilters(BuildContext context, WidgetRef ref, FlashcardStatus? currentFilter) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          _buildFilterChip(
+            context,
+            ref,
+            label: 'Todos',
+            isSelected: currentFilter == null,
+            onSelected: () => ref.read(flashcardDashboardProvider.notifier).setFilter(null),
+          ),
+          const SizedBox(width: 8),
+          _buildFilterChip(
+            context,
+            ref,
+            label: 'Novos',
+            isSelected: currentFilter == FlashcardStatus.newCard,
+            onSelected: () => ref.read(flashcardDashboardProvider.notifier).setFilter(FlashcardStatus.newCard),
+          ),
+          const SizedBox(width: 8),
+          _buildFilterChip(
+            context,
+            ref,
+            label: 'Revisar',
+            isSelected: currentFilter == FlashcardStatus.review,
+            onSelected: () => ref.read(flashcardDashboardProvider.notifier).setFilter(FlashcardStatus.review),
+          ),
+          const SizedBox(width: 8),
+          _buildFilterChip(
+            context,
+            ref,
+            label: 'Aprendidos',
+            isSelected: currentFilter == FlashcardStatus.learned,
+            onSelected: () => ref.read(flashcardDashboardProvider.notifier).setFilter(FlashcardStatus.learned),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(
+    BuildContext context,
+    WidgetRef ref, {
+    required String label,
+    required bool isSelected,
+    required VoidCallback onSelected,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onSelected(),
+      backgroundColor: Colors.white,
+      selectedColor: AppTheme.primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? AppTheme.textColor : Colors.grey,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey.shade300),
+      ),
+      showCheckmark: false,
+    );
+  }
+
+  Widget _buildCardItem(FlashcardWithStatus item, int index) {
+    Color statusColor;
+    String statusText;
+    IconData statusIcon;
+
+    switch (item.status) {
+      case FlashcardStatus.newCard:
+        statusColor = Colors.grey;
+        statusText = 'Novo';
+        statusIcon = Icons.circle_outlined;
+        break;
+      case FlashcardStatus.review:
+        statusColor = Colors.orange;
+        statusText = 'Revisar';
+        statusIcon = Icons.access_time_rounded;
+        break;
+      case FlashcardStatus.learned:
+        statusColor = Colors.green;
+        statusText = 'Aprendido';
+        statusIcon = Icons.check_circle_outline;
+        break;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StudySession(
+                flashcards: [item.flashcard], // Start session with only this card
+                onSessionComplete: () {
+                  ref.invalidate(flashcardDashboardProvider);
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+          );
+        },
+        contentPadding: const EdgeInsets.all(16),
         leading: Container(
-           padding: const EdgeInsets.all(10),
-           decoration: BoxDecoration(
-             color: AppTheme.scaffoldBackgroundColor,
-             borderRadius: BorderRadius.circular(10),
-           ),
-           child: const Icon(Icons.style_rounded, color: AppTheme.primaryColor),
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              '$index'.padLeft(2, '0'),
+              style: AppTheme.heading2.copyWith(color: Colors.black),
+            ),
+          ),
         ),
-        title: Text(title, style: AppTheme.bodyText.copyWith(fontWeight: FontWeight.bold)),
-        subtitle: Text('$total cards • $newCards novos'),
-        trailing: const Icon(Icons.chevron_right_rounded),
+        title: Text(item.flashcard.question, style: AppTheme.bodyText.copyWith(fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: Row(
+          children: [
+            Icon(statusIcon, size: 14, color: statusColor),
+            const SizedBox(width: 4),
+            Text(statusText, style: AppTheme.caption.copyWith(color: statusColor, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }

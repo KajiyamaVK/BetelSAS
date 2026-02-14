@@ -8,8 +8,13 @@ import 'dart:math';
 
 class StudySession extends ConsumerStatefulWidget {
   final List<Flashcard> flashcards;
+  final VoidCallback? onSessionComplete;
 
-  const StudySession({super.key, required this.flashcards});
+  const StudySession({
+    super.key,
+    required this.flashcards,
+    this.onSessionComplete,
+  });
 
   @override
   ConsumerState<StudySession> createState() => _StudySessionState();
@@ -42,29 +47,38 @@ class _StudySessionState extends ConsumerState<StudySession> {
     ref.read(flashcardRepositoryProvider).recordReview(card.id, performance);
 
     setState(() {
-      _currentIndex = (nextIndex ?? widget.flashcards.length);
+      if (nextIndex != null) {
+        _currentIndex = nextIndex;
+      }
     });
 
     return true; // Return true to allow swipe
+  }
+  
+  void _onEnd() {
+    if (widget.onSessionComplete != null) {
+      widget.onSessionComplete!();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.flashcards.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Sessão de Estudo')),
-        body: const Center(child: Text('Sem cards para revisar!')),
-      );
+      return const Center(child: Text('Sem cards para revisar!'));
     }
 
+    // We keep Scaffold here to provide the AppBar. 
+    // Since FlashcardDashboard also provides a Scaffold, this nested Scaffold provides the app bar for the session.
+    // It is common practice for screens to return Scaffold even if nested in tabs.
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('${_currentIndex + 1}/${widget.flashcards.length}'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        titleTextStyle: AppTheme.heading2,
-        iconTheme: const IconThemeData(color: AppTheme.textColor),
+        centerTitle: true,
+        titleTextStyle: AppTheme.heading2.copyWith(color: AppTheme.textColor),
+        automaticallyImplyLeading: false, // Don't show back button
       ),
       body: SafeArea(
         child: Column(
@@ -74,6 +88,7 @@ class _StudySessionState extends ConsumerState<StudySession> {
                 controller: _controller,
                 cardsCount: widget.flashcards.length,
                 onSwipe: _onSwipe,
+                onEnd: _onEnd,
                 allowedSwipeDirection: const AllowedSwipeDirection.only(left: true, right: true),
                 numberOfCardsDisplayed: min(3, widget.flashcards.length),
                 backCardOffset: const Offset(0, 40),

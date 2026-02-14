@@ -9,7 +9,6 @@ part of 'lesson.dart';
 Lesson _$LessonFromJson(Map<String, dynamic> json) => Lesson(
   id: (json['id'] as num).toInt(),
   title: json['title'] as String,
-
   imageUrl: json['imageUrl'] as String,
   content: json['content'] as String,
   scriptureReference: json['scriptureReference'] as String,
@@ -25,7 +24,6 @@ Lesson _$LessonFromJson(Map<String, dynamic> json) => Lesson(
 Map<String, dynamic> _$LessonToJson(Lesson instance) => <String, dynamic>{
   'id': instance.id,
   'title': instance.title,
-
   'imageUrl': instance.imageUrl,
   'content': instance.content,
   'scriptureReference': instance.scriptureReference,

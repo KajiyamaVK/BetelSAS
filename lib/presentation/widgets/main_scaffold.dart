@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:betelsas/presentation/screens/home/home_screen.dart';
 import 'package:betelsas/presentation/screens/music/music_screen.dart';
 import 'package:betelsas/presentation/screens/flashcards/dashboard.dart';
+import 'package:betelsas/presentation/screens/flashcards/dashboard_view_model.dart';
 import 'package:betelsas/presentation/screens/favorites/favorites_screen.dart';
-import 'package:cupertino_icons/cupertino_icons.dart';
+
 
 class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});
@@ -32,7 +33,13 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          if (index == 2) {
+             // Reset the flashcards state (filter back to All) when tapping the tab
+             ref.invalidate(flashcardDashboardProvider);
+          }
+          setState(() => _currentIndex = index);
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),

@@ -70,9 +70,10 @@ class FlashcardDashboardViewModel extends StateNotifier<AsyncValue<FlashcardDash
         filtered = allCards.where((c) => c.status == filter).toList();
       }
 
-      state = AsyncValue.data(currentState.copyWith(
-        filter: filter,
+      state = AsyncValue.data(FlashcardDashboardState(
+        allCards: currentState.allCards,
         filteredCards: filtered,
+        filter: filter,
       ));
     });
   }
